@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -18,21 +19,24 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
-import { ChatBestOfIcon } from '~/common/components/icons/ChatBestOfIcon';
+import { SystemPurposeId, SystemPurposes } from '../../../../data';
+
+import { BlocksRenderer, editBlocksSx } from '~/modules/blocks/BlocksRenderer';
+import { useSanityTextDiffs } from '~/modules/blocks/RenderTextDiff';
+
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
-import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { cssRainbowColorKeyframes, themeScalingMap } from '~/common/app.theme';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import { BlocksRenderer, editBlocksSx } from './blocks/BlocksRenderer';
 import { useChatShowTextDiff } from '../../store-app-chat';
-import { useSanityTextDiffs } from './blocks/RenderTextDiff';
 
 
 // Enable the menu on text selection
@@ -178,22 +182,23 @@ export const ChatMessageMemo = React.memo(ChatMessage);
  * or collapsing long user messages.
  *
  */
-function ChatMessage(props: {
+export function ChatMessage(props: {
   message: DMessage,
   diffPreviousText?: string,
+  fitScreen: boolean,
   isBottom?: boolean,
-  isMobile?: boolean,
   isImagining?: boolean,
   isSpeaking?: boolean,
   blocksShowDate?: boolean,
   onConversationBranch?: (messageId: string) => void,
-  onConversationRestartFrom?: (messageId: string, offset: number, chatEffectBestOf: boolean) => Promise<void>,
+  onConversationRestartFrom?: (messageId: string, offset: number, chatEffectBeam: boolean) => Promise<void>,
   onConversationTruncate?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
   onMessageEdit?: (messageId: string, text: string) => void,
   onTextDiagram?: (messageId: string, text: string) => Promise<void>
   onTextImagine?: (text: string) => Promise<void>
   onTextSpeak?: (text: string) => Promise<void>
+  sx?: SxProps,
 }) {
 
   // state
@@ -204,6 +209,7 @@ function ChatMessage(props: {
   const [isEditing, setIsEditing] = React.useState(false);
 
   // external state
+  const labsChatBeam = useUXLabsStore(state => state.labsChatBeam);
   const { cleanerLooks, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(state => ({
     cleanerLooks: state.zenMode === 'cleaner',
     contentScaling: state.contentScaling,
@@ -278,10 +284,10 @@ function ChatMessage(props: {
     props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, false);
   };
 
-  const handleOpsConversationRestartBestOf = async (e: React.MouseEvent) => {
+  const handleOpsConversationRestartFromBeam = async (e: React.MouseEvent) => {
     e.stopPropagation();
     closeOpsMenu();
-    props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, true);
+    props.onConversationRestartFrom && labsChatBeam && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, true);
   };
 
   const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
@@ -410,6 +416,7 @@ function ChatMessage(props: {
         borderBottomColor: 'divider',
         ...(ENABLE_COPY_MESSAGE_OVERLAY && { position: 'relative' }),
         '&:hover > button': { opacity: 1 },
+        ...props.sx,
       }}
     >
 
@@ -437,7 +444,7 @@ function ChatMessage(props: {
 
           {/* Assistant model name */}
           {fromAssistant && (
-            <Tooltip title={messageOriginLLM || 'unk-model'} variant='solid'>
+            <Tooltip title={messageTyping ? null : (messageOriginLLM || 'unk-model')} variant='solid'>
               <Typography level='body-xs' sx={{
                 overflowWrap: 'anywhere',
                 ...(messageTyping ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite` } : {}),
@@ -466,14 +473,15 @@ function ChatMessage(props: {
           fromRole={messageRole}
           contentScaling={contentScaling}
           errorMessage={errorMessage}
+          fitScreen={props.fitScreen}
           isBottom={props.isBottom}
-          isMobile={props.isMobile}
           renderTextAsMarkdown={renderMarkdown}
           renderTextDiff={textDiffs || undefined}
           showDate={props.blocksShowDate === true ? messageUpdated || messageCreated || undefined : undefined}
           wasUserEdited={wasEdited}
           onContextMenu={(props.onMessageEdit && ENABLE_SELECTION_RIGHT_CLICK_MENU) ? handleBlocksContextMenu : undefined}
           onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
+          optiAllowMemo={messageTyping}
         />
 
       )}
@@ -481,7 +489,7 @@ function ChatMessage(props: {
 
       {/* Overlay copy icon */}
       {ENABLE_COPY_MESSAGE_OVERLAY && !fromSystem && !isEditing && (
-        <Tooltip title={fromAssistant ? 'Copy message' : 'Copy input'} variant='solid'>
+        <Tooltip title={messageTyping ? null : (fromAssistant ? 'Copy message' : 'Copy input')} variant='solid'>
           <IconButton
             variant='outlined' onClick={handleOpsCopy}
             sx={{
@@ -582,16 +590,18 @@ function ChatMessage(props: {
                     Retry
                     <KeyStroke combo='Ctrl + Shift + R' />
                   </Box>}
-              <Tooltip title='Best-Of'>
-                <IconButton
-                  size='sm'
-                  variant='outlined' color='primary'
-                  onClick={handleOpsConversationRestartBestOf}
-                  sx={{ ml: 'auto', my: '-0.25rem' /* absorb the menuItem padding */ }}
-                >
-                  <ChatBestOfIcon /> {/*<GavelIcon />*/}
-                </IconButton>
-              </Tooltip>
+              {labsChatBeam && (
+                <Tooltip title={messageTyping ? null : 'Best-Of'}>
+                  <IconButton
+                    size='sm'
+                    variant='outlined' color='primary'
+                    onClick={handleOpsConversationRestartFromBeam}
+                    sx={{ ml: 'auto', my: '-0.25rem' /* absorb the menuItem padding */ }}
+                  >
+                    <ChatBeamIcon /> {/*<GavelIcon />*/}
+                  </IconButton>
+                </Tooltip>
+              )}
             </MenuItem>
           )}
         </CloseableMenu>

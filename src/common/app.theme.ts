@@ -1,4 +1,5 @@
 import createCache from '@emotion/cache';
+
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
 import { keyframes } from '@emotion/react';
@@ -15,7 +16,7 @@ export const formLabelStartWidth = 140;
 // Theme & Fonts
 
 const inter = Inter({
-  weight: ['400', '500', '600', '700'],
+  weight: [ /* '300', sm */ '400' /* (undefined, default) */, '500' /* md */, '600' /* lg */, '700' /* xl */],
   subsets: ['latin'],
   display: 'swap',
   fallback: ['Helvetica', 'Arial', 'sans-serif'],
@@ -152,30 +153,46 @@ interface ContentScalingOptions {
   // BlocksRenderer
   blockCodeFontSize: string;
   blockFontSize: string;
+  blockImageGap: number;
   blockLineHeight: string | number;
   // ChatMessage
   chatMessagePadding: number;
+  // ChatDrawer
+  chatDrawerItemSx: { '--ListItem-minHeight': string, fontSize: string };
+  chatDrawerItemFolderSx: { '--ListItem-minHeight': string, fontSize: string };
 }
 
 export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
   xs: {
     blockCodeFontSize: '0.75rem',
     blockFontSize: 'xs',
+    blockImageGap: 1,
     blockLineHeight: 1.666667,
     chatMessagePadding: 1.25,
+    chatDrawerItemSx: { '--ListItem-minHeight': '2.25rem', fontSize: 'sm' },          // 36px
+    chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'sm' },     // 40px
   },
   sm: {
     blockCodeFontSize: '0.75rem',
     blockFontSize: 'sm',
+    blockImageGap: 1.5,
     blockLineHeight: 1.714286,
     chatMessagePadding: 1.5,
+    chatDrawerItemSx: { '--ListItem-minHeight': '2.25rem', fontSize: 'sm' },
+    chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'sm' },
   },
   md: {
     blockCodeFontSize: '0.875rem',
     blockFontSize: 'md',
+    blockImageGap: 2,
     blockLineHeight: 1.75,
     chatMessagePadding: 2,
+    chatDrawerItemSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'md' },           // 40px
+    chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.75rem', fontSize: 'md' },    // 44px
   },
+  // lg: {
+  //   chatDrawerFoldersLineHeight: '3rem',
+  // },
 };
 
 
