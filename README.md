@@ -1,11 +1,13 @@
 # BIG-AGI 🧠✨
 
-Welcome to big-AGI 👋, the GPT application for professionals that need function, form,
+Welcome to big-AGI, the AI suite for professionals that need function, form,
 simplicity, and speed. Powered by the latest models from 12 vendors and
-open-source model servers, `big-AGI` offers best-in-class Voice and Chat with AI Personas,
-visualizations, coding, drawing, calling, and quite more -- all in a polished UX.
+open-source servers, `big-AGI` offers best-in-class Chats,
+[Beams](https://github.com/enricoros/big-AGI/issues/470),
+and [Calls](https://github.com/enricoros/big-AGI/issues/354) with AI personas,
+visualizations, coding, drawing, side-by-side chatting, and more -- all wrapped in a polished UX.
 
-Pros use big-AGI. 🚀 Developers love big-AGI. 🤖
+Stay ahead of the curve with big-AGI. 🚀 Pros & Devs love big-AGI. 🤖
 
 [![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=launch)](https://big-agi.com)
 
@@ -17,6 +19,15 @@ Or fork & run on Vercel
 
 big-AGI is an open book; see the **[ready-to-ship and future ideas](https://github.com/users/enricoros/projects/4/views/2)** in our open roadmap
 
+### What's New in 1.15.0 · April 1, 2024 · Beam
+
+- ⚠️ [**Beam**: the multi-model AI chat](https://big-agi.com/blog/beam-multi-model-ai-reasoning). find better answers, faster - a game-changer for brainstorming, decision-making, and creativity. [#443](https://github.com/enricoros/big-AGI/issues/443)
+- Managed Deployments **Auto-Configuration**: simplify the UI models setup with backend-set models. [#436](https://github.com/enricoros/big-AGI/issues/436)
+- Message **Starring ⭐**: star important messages within chats, to attach them later. [#476](https://github.com/enricoros/big-AGI/issues/476)
+- Enhanced the default Persona
+- Fixes to Gemini models and SVGs, improvements to UI and icons
+- Beast release, over 430 commits, 10,000+ lines changed: [release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.15.0), and changes [v1.14.1...v1.15.0](https://github.com/enricoros/big-AGI/compare/v1.14.1...v1.15.0)
+
 ### What's New in 1.14.1 · March 7, 2024 · Modelmorphic
 
 - **Anthropic** [Claude-3](https://www.anthropic.com/news/claude-3-family) model family support. [#443](https://github.com/enricoros/big-AGI/issues/443)
@@ -26,7 +37,6 @@ big-AGI is an open book; see the **[ready-to-ship and future ideas](https://gith
 - Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
 - Enhanced UX with auto-sizing charts, refined search and folder functionalities, perfected scaling
 - And with more UI improvements, documentation, bug fixes (20 tickets), and developer enhancements
-- [Release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.14.0), and changes [v1.13.1...v1.14.1](https://github.com/enricoros/big-AGI/compare/v1.13.1...v1.14.1) (233 commits, 8,000+ lines changed)
 
 ### What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
 
@@ -84,11 +94,11 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 
 For full details and former releases, check out the [changelog](docs/changelog.md).
 
-## ✨ Key Features 👊
+## 👉 Key Features ✨
 
 | ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![100+ AI Models](https://img.shields.io/badge/100%2B%20AI%20Models-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-32383e?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-32383e?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-f22a85?style=for-the-badge&logo=tools&logoColor=white) |  
 |---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------| 
-| **Chat**<br/>**Call** AGI<br/>**Draw** images<br/>**Agents**, ...                                             | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Modes<br/>Screen Capture<br/>Camera + OCR                                                      |
+| **Chat**<br/>**Call**<br/>**Beam**<br/>**Draw**, ...                                                          | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Modes<br/>Screen Capture<br/>Camera + OCR                                                      |
 
 ![big-AGI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
 
