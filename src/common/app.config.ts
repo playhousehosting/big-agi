@@ -9,7 +9,7 @@
 export const Brand = {
   Title: {
     Base: 'Chat With GPT',
-    Common: (process.env.NODE_ENV === 'development' ? '[DEV] ' : '') + 'big-AGI',
+    Common: (process.env.NODE_ENV === 'development' ? '[DEV] ' : '') + 'Chat With GPT',
   },
   Meta: {
     Description: 'Launch Chat With GPT to unlock the full potential of AI, with precise control over your data and models. Voice interface, AI personas, advanced features, and fun UX.',
