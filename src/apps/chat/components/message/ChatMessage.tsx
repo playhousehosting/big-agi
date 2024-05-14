@@ -40,6 +40,7 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
+import { ReplyToBubble } from './ReplyToBubble';
 import { useChatShowTextDiff } from '../../store-app-chat';
 
 
@@ -267,6 +268,7 @@ export function ChatMessage(props: {
     role: messageRole,
     purposeId: messagePurposeId,
     originLLM: messageOriginLLM,
+    metadata: messageMetadata,
     created: messageCreated,
     updated: messageUpdated,
   } = props.message;
@@ -295,12 +297,17 @@ export function ChatMessage(props: {
 
   const { onMessageToggleUserFlag } = props;
 
-  const closeOpsMenu = () => setOpsMenuAnchor(null);
+  const handleOpsMenuToggle = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault(); // added for the Right mouse click (to prevent the menu)
+    setOpsMenuAnchor(anchor => anchor ? null : event.currentTarget);
+  }, []);
+
+  const handleCloseOpsMenu = React.useCallback(() => setOpsMenuAnchor(null), []);
 
   const handleOpsCopy = (e: React.MouseEvent) => {
     copyToClipboard(textSel, 'Text');
     e.preventDefault();
-    closeOpsMenu();
+    handleCloseOpsMenu();
     closeSelectionMenu();
     closeToolbar();
   };
@@ -309,8 +316,8 @@ export function ChatMessage(props: {
     if (messageTyping && !isEditing) return; // don't allow editing while typing
     setIsEditing(!isEditing);
     e.preventDefault();
-    closeOpsMenu();
-  }, [isEditing, messageTyping]);
+    handleCloseOpsMenu();
+  }, [handleCloseOpsMenu, isEditing, messageTyping]);
 
   const handleOpsToggleStarred = React.useCallback(() => {
     onMessageToggleUserFlag?.(messageId, 'starred');
@@ -318,13 +325,13 @@ export function ChatMessage(props: {
 
   const handleOpsAssistantFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
-    closeOpsMenu();
+    handleCloseOpsMenu();
     await props.onMessageAssistantFrom?.(messageId, fromAssistant ? -1 : 0);
   };
 
   const handleOpsBeamFrom = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    closeOpsMenu();
+    handleCloseOpsMenu();
     await props.onMessageBeam?.(messageId);
   };
 
@@ -332,7 +339,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     e.stopPropagation(); // to try to not steal the focus from the banched conversation
     props.onMessageBranch?.(messageId);
-    closeOpsMenu();
+    handleCloseOpsMenu();
   };
 
   const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
@@ -341,7 +348,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     if (props.onTextDiagram) {
       await props.onTextDiagram(messageId, textSel);
-      closeOpsMenu();
+      handleCloseOpsMenu();
       closeSelectionMenu();
       closeToolbar();
     }
@@ -351,7 +358,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     if (props.onTextImagine) {
       await props.onTextImagine(textSel);
-      closeOpsMenu();
+      handleCloseOpsMenu();
       closeSelectionMenu();
       closeToolbar();
     }
@@ -361,7 +368,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     if (props.onReplyTo && textSel.trim().length >= SELECTION_TOOLBAR_MIN_LENGTH) {
       props.onReplyTo(messageId, textSel.trim());
-      closeOpsMenu();
+      handleCloseOpsMenu();
       closeSelectionMenu();
       closeToolbar();
     }
@@ -371,7 +378,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     if (props.onTextSpeak) {
       await props.onTextSpeak(textSel);
-      closeOpsMenu();
+      handleCloseOpsMenu();
       closeSelectionMenu();
       closeToolbar();
     }
@@ -379,7 +386,7 @@ export function ChatMessage(props: {
 
   const handleOpsTruncate = (_e: React.MouseEvent) => {
     props.onMessageTruncate?.(messageId);
-    closeOpsMenu();
+    handleCloseOpsMenu();
   };
 
   const handleOpsDelete = (_e: React.MouseEvent) => {
@@ -546,93 +553,97 @@ export function ChatMessage(props: {
         }),
 
         // style: make room for a top decorator if set
-        ...(!!props.topDecorator && {
-          pt: '2.5rem',
-        }),
         '&:hover > button': { opacity: 1 },
 
         // layout
-        display: 'flex',
-        flexDirection: !fromAssistant ? 'row-reverse' : 'row',
-        alignItems: 'flex-start',
-        gap: { xs: 0, md: 1 },
+        display: 'block', // this is Needed, otherwise there will be a horizontal overflow
 
         ...props.sx,
       }}
     >
 
       {/* (Optional) underlayed top decorator */}
-      {props.topDecorator && (
-        <Box sx={{ position: 'absolute', left: 0, right: 0, top: 0, textAlign: 'center' }}>
-          {props.topDecorator}
-        </Box>
-      )}
+      {props.topDecorator}
 
-      {/* Avatar (Persona) */}
-      {showAvatar && (
-        <Box sx={personaSx}>
+      {/* Message Row: Avatar, Blocks (1 text -> blocksRenderer) */}
+      <Box sx={{
+        display: 'flex',
+        flexDirection: !fromAssistant ? 'row-reverse' : 'row',
+        alignItems: 'flex-start',
+        gap: { xs: 0, md: 1 },
+      }}>
 
-          {/* Persona Avatar or Menu Button */}
-          <Box
-            onClick={event => setOpsMenuAnchor(event.currentTarget)}
-            onMouseEnter={() => setIsHovering(true)}
-            onMouseLeave={() => setIsHovering(false)}
-            sx={{ display: 'flex' }}
-          >
-            {(isHovering || opsMenuAnchor) ? (
-              <IconButton variant={opsMenuAnchor ? 'solid' : 'soft'} color={(fromAssistant || fromSystem) ? 'neutral' : 'primary'} sx={avatarIconSx}>
-                <MoreVertIcon />
-              </IconButton>
-            ) : (
-              avatarEl
+        {/* Avatar (Persona) */}
+        {showAvatar && (
+          <Box sx={personaSx}>
+
+            {/* Persona Avatar or Menu Button */}
+            <Box
+              onClick={handleOpsMenuToggle}
+              onContextMenu={handleOpsMenuToggle}
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+              sx={{ display: 'flex' }}
+            >
+              {(isHovering || opsMenuAnchor) ? (
+                <IconButton variant={opsMenuAnchor ? 'solid' : 'soft'} color={(fromAssistant || fromSystem) ? 'neutral' : 'primary'} sx={avatarIconSx}>
+                  <MoreVertIcon />
+                </IconButton>
+              ) : (
+                avatarEl
+              )}
+            </Box>
+
+            {/* Assistant model name */}
+            {fromAssistant && (
+              <Tooltip arrow title={messageTyping ? null : (messageOriginLLM || 'unk-model')} variant='solid'>
+                <Typography level='body-xs' sx={{
+                  overflowWrap: 'anywhere',
+                  ...(messageTyping ? { animation: `${animationColorRainbow} 5s linear infinite` } : {}),
+                }}>
+                  {prettyBaseModel(messageOriginLLM)}
+                </Typography>
+              </Tooltip>
             )}
+
           </Box>
-
-          {/* Assistant model name */}
-          {fromAssistant && (
-            <Tooltip arrow title={messageTyping ? null : (messageOriginLLM || 'unk-model')} variant='solid'>
-              <Typography level='body-xs' sx={{
-                overflowWrap: 'anywhere',
-                ...(messageTyping ? { animation: `${animationColorRainbow} 5s linear infinite` } : {}),
-              }}>
-                {prettyBaseModel(messageOriginLLM)}
-              </Typography>
-            </Tooltip>
-          )}
-
-        </Box>
-      )}
+        )}
 
 
-      {/* Edit / Blocks */}
-      {isEditing ? (
+        {/* Edit / Blocks */}
+        {isEditing ? (
 
-        <InlineTextarea
-          initialText={messageText} onEdit={handleTextEdited}
-          sx={editBlocksSx}
-        />
+          <InlineTextarea
+            initialText={messageText} onEdit={handleTextEdited}
+            sx={editBlocksSx}
+          />
 
-      ) : (
+        ) : (
 
-        <BlocksRenderer
-          ref={blocksRendererRef}
-          text={messageText}
-          fromRole={messageRole}
-          contentScaling={contentScaling}
-          errorMessage={errorMessage}
-          fitScreen={props.fitScreen}
-          isBottom={props.isBottom}
-          renderTextAsMarkdown={renderMarkdown}
-          renderTextDiff={textDiffs || undefined}
-          showDate={props.showBlocksDate === true ? messageUpdated || messageCreated || undefined : undefined}
-          showUnsafeHtml={props.showUnsafeHtml}
-          wasUserEdited={wasEdited}
-          onContextMenu={(props.onMessageEdit && ENABLE_SELECTION_RIGHT_CLICK_MENU) ? handleBlocksContextMenu : undefined}
-          onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
-          optiAllowMemo={messageTyping}
-        />
+          <BlocksRenderer
+            ref={blocksRendererRef}
+            text={messageText}
+            fromRole={messageRole}
+            contentScaling={contentScaling}
+            errorMessage={errorMessage}
+            fitScreen={props.fitScreen}
+            isBottom={props.isBottom}
+            renderTextAsMarkdown={renderMarkdown}
+            renderTextDiff={textDiffs || undefined}
+            showDate={props.showBlocksDate === true ? messageUpdated || messageCreated || undefined : undefined}
+            showUnsafeHtml={props.showUnsafeHtml}
+            wasUserEdited={wasEdited}
+            onContextMenu={(props.onMessageEdit && ENABLE_SELECTION_RIGHT_CLICK_MENU) ? handleBlocksContextMenu : undefined}
+            onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
+            optiAllowMemo={messageTyping}
+          />
 
-      )}
+        )}
+
+      </Box>
+
+      {/* Reply-To Bubble */}
+      {!!messageMetadata?.inReplyToText && <ReplyToBubble inlineMessage replyToText={messageMetadata.inReplyToText} className='reply-to-bubble' />}
 
 
       {/* Overlay copy icon */}
@@ -654,7 +665,7 @@ export function ChatMessage(props: {
       {!!opsMenuAnchor && (
         <CloseableMenu
           dense placement='bottom-end'
-          open anchorEl={opsMenuAnchor} onClose={closeOpsMenu}
+          open anchorEl={opsMenuAnchor} onClose={handleCloseOpsMenu}
           sx={{ minWidth: 280 }}
         >
 
@@ -716,15 +727,6 @@ export function ChatMessage(props: {
               <span style={{ opacity: 0.5 }}>after this</span>
             </MenuItem>
           )}
-          {/* Diff Viewer */}
-          {!!props.diffPreviousText && <ListDivider />}
-          {!!props.diffPreviousText && (
-            <MenuItem onClick={handleOpsToggleShowDiff}>
-              <ListItemDecorator><DifferenceIcon /></ListItemDecorator>
-              Show difference
-              <Switch checked={showDiff} onChange={handleOpsToggleShowDiff} sx={{ ml: 'auto' }} />
-            </MenuItem>
-          )}
           {/* Diagram / Draw / Speak */}
           {!!props.onTextDiagram && <ListDivider />}
           {!!props.onTextDiagram && (
@@ -743,6 +745,15 @@ export function ChatMessage(props: {
             <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
               <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverOutlinedIcon />}</ListItemDecorator>
               Speak
+            </MenuItem>
+          )}
+          {/* Diff Viewer */}
+          {!!props.diffPreviousText && <ListDivider />}
+          {!!props.diffPreviousText && (
+            <MenuItem onClick={handleOpsToggleShowDiff}>
+              <ListItemDecorator><DifferenceIcon /></ListItemDecorator>
+              Show difference
+              <Switch checked={showDiff} onChange={handleOpsToggleShowDiff} sx={{ ml: 'auto' }} />
             </MenuItem>
           )}
           {/* Beam/Restart */}
@@ -794,7 +805,8 @@ export function ChatMessage(props: {
                 alignItems: 'center',
                 '& > button': {
                   '--Icon-fontSize': '1rem',
-                  minWidth: '2.5rem',
+                  minHeight: '2.5rem',
+                  minWidth: '2.75rem',
                 },
               }}
             >
@@ -814,10 +826,10 @@ export function ChatMessage(props: {
                   <ContentCopyIcon />
                 </IconButton>
               </Tooltip>
-              {((!!props.onTextDiagram && couldDiagram) || !!props.onTextSpeak) && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
-              {!!props.onTextDiagram && couldDiagram && <Tooltip disableInteractive arrow placement='top' title='Auto-Diagram ...'>
-                <IconButton onClick={handleOpsDiagram} disabled={!couldDiagram}>
-                  <AccountTreeOutlinedIcon />
+              {(!!props.onTextDiagram || !!props.onTextSpeak) && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
+              {!!props.onTextDiagram && <Tooltip disableInteractive arrow placement='top' title={couldDiagram ? 'Auto-Diagram...' : 'Too short to Auto-Diagram'}>
+                <IconButton onClick={couldDiagram ? handleOpsDiagram : undefined}>
+                  <AccountTreeOutlinedIcon sx={{ color: couldDiagram ? 'primary' : 'neutral.plainDisabledColor' }} />
                 </IconButton>
               </Tooltip>}
               {/*{!!props.onTextImagine && <Tooltip disableInteractive arrow placement='top' title='Auto-Draw'>*/}
